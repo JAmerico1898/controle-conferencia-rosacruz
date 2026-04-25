@@ -8,7 +8,11 @@
       "Bash(git commit *)",
       "Bash(npx drizzle-kit *)",
       "Bash(npx tsc *)",
-      "Bash(DATABASE_URL=postgres://fake:fake@localhost:5432/fake SESSION_SECRET=fake_secret_just_for_build_phase_with_enough_length_to_pass ADMIN_USERS=test:fakehash npm run build)"
+      "Bash(DATABASE_URL=postgres://fake:fake@localhost:5432/fake SESSION_SECRET=fake_secret_just_for_build_phase_with_enough_length_to_pass ADMIN_USERS=test:fakehash npm run build)",
+      "Bash(npx vercel *)",
+      "Bash(npm run *)",
+      "Bash(node -e \"console.log\\('SESSION_SECRET=' + require\\('crypto'\\).randomBytes\\(48\\).toString\\('hex'\\)\\)\")",
+      "Bash(node -e \"console.log\\('CRON_SECRET=' + require\\('crypto'\\).randomBytes\\(24\\).toString\\('hex'\\)\\)\")"
     ]
   }
 }
