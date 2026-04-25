@@ -4,6 +4,8 @@ import { db } from "@/lib/db/client";
 import { inscricoes, conferencias } from "@/lib/db/schema";
 import { BotaoImprimir } from "@/components/public/BotaoImprimir";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page({
   params,
 }: {

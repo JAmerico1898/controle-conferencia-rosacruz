@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
+
+export const dynamic = "force-dynamic";
 import { conferencias } from "@/lib/db/schema";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";

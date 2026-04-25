@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSessao } from "@/lib/auth";
 import { AdminNav } from "@/components/admin/AdminNav";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fechar-conferencias",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

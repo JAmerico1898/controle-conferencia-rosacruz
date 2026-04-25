@@ -6,7 +6,9 @@
       "Bash(npx vitest *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(npx drizzle-kit *)"
+      "Bash(npx drizzle-kit *)",
+      "Bash(npx tsc *)",
+      "Bash(DATABASE_URL=postgres://fake:fake@localhost:5432/fake SESSION_SECRET=fake_secret_just_for_build_phase_with_enough_length_to_pass ADMIN_USERS=test:fakehash npm run build)"
     ]
   }
 }
