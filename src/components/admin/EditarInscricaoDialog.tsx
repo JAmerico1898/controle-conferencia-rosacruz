@@ -22,12 +22,12 @@ export function EditarInscricaoDialog({
 
   return (
     <tr>
-      <td colSpan={7} className="bg-bone/60 p-6 border-b border-rule">
+      <td colSpan={12} className="bg-bone/60 p-6 border-b border-rule">
         <form action={action} className="space-y-3 max-w-2xl">
           <input type="hidden" name="id" value={i.id} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Nome" name="nome" defaultValue={i.nome} />
-            <Field label="Email" name="email" defaultValue={i.email} />
+            <Field label="WhatsApp" name="whatsapp" defaultValue={i.whatsapp} />
             <Field label="Cidade" name="cidade" defaultValue={i.cidade} />
             <SelectField
               label="Estado"

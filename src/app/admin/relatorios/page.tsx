@@ -1,7 +1,7 @@
 import { eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { conferencias } from "@/lib/db/schema";
-import { PREDIOS } from "@/lib/constants";
+import { PREDIOS, type Predio } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -34,15 +34,20 @@ export default async function Page() {
             Feminino em{" "}
             <span className="text-ink">
               {PREDIOS[conf.predioFeminino].label}
-            </span>{" "}
-            · Masculino em{" "}
+            </span>
+            {conf.extraFeminino && <span className="text-ink"> + extra</span>} ·
+            Masculino em{" "}
             <span className="text-ink">
               {PREDIOS[conf.predioMasculino].label}
             </span>
+            {conf.extraMasculino && <span className="text-ink"> + extra</span>}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <BotaoRelatorio predio="antigo" />
             <BotaoRelatorio predio="novo" />
+            {(conf.extraFeminino || conf.extraMasculino) && (
+              <BotaoRelatorio predio="extra" />
+            )}
           </div>
         </section>
       )}
@@ -50,7 +55,7 @@ export default async function Page() {
   );
 }
 
-function BotaoRelatorio({ predio }: { predio: "antigo" | "novo" }) {
+function BotaoRelatorio({ predio }: { predio: Predio }) {
   const cfg = PREDIOS[predio];
   return (
     <a
@@ -59,8 +64,8 @@ function BotaoRelatorio({ predio }: { predio: "antigo" | "novo" }) {
     >
       <span className="font-display text-2xl">{cfg.label}</span>
       <span className="text-xs uppercase tracking-[0.18em] text-clay">
-        {cfg.quartos} quarto{cfg.quartos > 1 ? "s" : ""} ·{" "}
-        {cfg.baixo} baixo / {cfg.cima} cima
+        {cfg.quartos} quarto{cfg.quartos > 1 ? "s" : ""} · {cfg.baixo} baixo
+        {cfg.cima > 0 ? ` / ${cfg.cima} cima` : ""}
       </span>
       <span className="text-xs text-ink/50 mt-2">
         ↓ baixar <span className="num">.docx</span>

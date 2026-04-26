@@ -28,7 +28,7 @@ export async function GET(
   if (!sessao) return new Response("Não autenticado", { status: 401 });
 
   const { predio: rawPredio } = await ctx.params;
-  if (rawPredio !== "novo" && rawPredio !== "antigo") {
+  if (rawPredio !== "novo" && rawPredio !== "antigo" && rawPredio !== "extra") {
     return new Response("Prédio inválido", { status: 400 });
   }
   const predio = rawPredio as Predio;
@@ -55,6 +55,12 @@ export async function GET(
 
   const linhas = alocarCamas(rows, predio, conf);
   const genero = generoDoPredio(predio, conf);
+  if (!genero) {
+    return new Response(
+      "Este prédio não está atribuído a nenhum gênero nesta conferência.",
+      { status: 404 },
+    );
+  }
   const cfg = PREDIOS[predio];
 
   const headerCells = ["Nome do Aluno(a)", "Quarto", "Tipo de Cama", "Nº Cama"];

@@ -34,7 +34,7 @@ export async function criarInscricaoAction(_: unknown, formData: FormData) {
     almocoSabado: formData.get("almocoSabado") === "on",
     jantarSabado: formData.get("jantarSabado") === "on",
     lancheDomingo: formData.get("lancheDomingo") === "on",
-    email: String(formData.get("email") ?? ""),
+    whatsapp: String(formData.get("whatsapp") ?? ""),
   };
   const v = validarPayloadInscricao(payload);
   if (!v.ok) return { erro: v.erro };
@@ -60,11 +60,7 @@ export async function criarInscricaoAction(_: unknown, formData: FormData) {
         .where(eq(inscricoes.conferenciaId, conf.id));
 
       if (v.value.alojamento && v.value.tipoCama) {
-        const vagas = calcularVagas(
-          ativos as any,
-          conf.predioFeminino,
-          conf.predioMasculino,
-        );
+        const vagas = calcularVagas(ativos as any, conf);
         if (vagasEsgotadas(vagas, v.value.genero, v.value.tipoCama)) {
           throw new Error("As vagas para o tipo de cama solicitado se esgotaram.");
         }
@@ -114,7 +110,7 @@ export async function criarInscricaoAction(_: unknown, formData: FormData) {
         jantarSabado: v.value.jantarSabado,
         lancheDomingo: v.value.lancheDomingo,
         cafeDomingo: v.value.cafeDomingo,
-        email: v.value.email.trim(),
+        whatsapp: v.value.whatsapp,
       });
 
       return cod;

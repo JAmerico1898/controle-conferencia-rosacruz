@@ -45,7 +45,7 @@ export default async function Page({
             href={`/admin/inscricoes/exportar?conferenciaId=${selecionada.id}`}
             className="border border-rule px-3 py-1 hover:bg-ink hover:text-bone"
           >
-            Exportar CSV
+            Exportar Excel
           </a>
         </div>
       </header>

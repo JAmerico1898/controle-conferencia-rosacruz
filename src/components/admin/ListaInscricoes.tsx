@@ -23,9 +23,14 @@ export async function ListaInscricoes({
           <tr>
             <th className="py-3">Código</th>
             <th>Nome</th>
+            <th>WhatsApp</th>
             <th>Gênero</th>
             <th>Cidade/UF</th>
+            <th>Discipulado</th>
             <th>Aloj.</th>
+            <th>Cama</th>
+            <th>Chegada</th>
+            <th>Refeições</th>
             <th>Status</th>
             <th></th>
           </tr>

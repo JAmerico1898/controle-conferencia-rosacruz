@@ -29,7 +29,7 @@ export async function editarInscricaoAction(_: unknown, fd: FormData) {
     almocoSabado: fd.get("almocoSabado") === "on",
     jantarSabado: fd.get("jantarSabado") === "on",
     lancheDomingo: fd.get("lancheDomingo") === "on",
-    email: String(fd.get("email") ?? ""),
+    whatsapp: String(fd.get("whatsapp") ?? ""),
   };
   const v = validarPayloadInscricao(payload);
   if (!v.ok) return { erro: v.erro };
@@ -49,7 +49,7 @@ export async function editarInscricaoAction(_: unknown, fd: FormData) {
       jantarSabado: v.value.jantarSabado,
       lancheDomingo: v.value.lancheDomingo,
       cafeDomingo: v.value.cafeDomingo,
-      email: v.value.email.trim(),
+      whatsapp: v.value.whatsapp,
       alteradoEm: new Date(),
       alteradoPor: s.login,
     })

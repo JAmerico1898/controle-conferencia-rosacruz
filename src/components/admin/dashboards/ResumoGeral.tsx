@@ -14,22 +14,22 @@ import type { Vagas } from "@/lib/vagas";
 export function ResumoGeral({ vagas }: { vagas: Vagas }) {
   const data = [
     {
-      nome: "Fem · baixo",
+      nome: "Feminino · baixo",
       ocupado: vagas.capacidade.feminino.baixo - vagas.feminino.baixo,
       livre: vagas.feminino.baixo,
     },
     {
-      nome: "Fem · cima",
+      nome: "Feminino · cima",
       ocupado: vagas.capacidade.feminino.cima - vagas.feminino.cima,
       livre: vagas.feminino.cima,
     },
     {
-      nome: "Mas · baixo",
+      nome: "Masculino · baixo",
       ocupado: vagas.capacidade.masculino.baixo - vagas.masculino.baixo,
       livre: vagas.masculino.baixo,
     },
     {
-      nome: "Mas · cima",
+      nome: "Masculino · cima",
       ocupado: vagas.capacidade.masculino.cima - vagas.masculino.cima,
       livre: vagas.masculino.cima,
     },

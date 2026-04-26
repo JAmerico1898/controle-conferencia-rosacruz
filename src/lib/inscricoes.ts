@@ -16,7 +16,12 @@ const schema = z.object({
   almocoSabado: z.boolean(),
   jantarSabado: z.boolean(),
   lancheDomingo: z.boolean(),
-  email: z.string().trim().min(3, "Email obrigatório"),
+  whatsapp: z
+    .string()
+    .trim()
+    .refine((v) => v.replace(/\D/g, "").length === 11, {
+      message: "WhatsApp deve ter 11 dígitos com DDD: (xx) xxxxx-xxxx",
+    }),
 });
 
 export type PayloadInscricao = z.infer<typeof schema>;
@@ -24,12 +29,18 @@ export type InscricaoValidada = PayloadInscricao & { cafeDomingo: boolean };
 
 type Resultado<T> = { ok: true; value: T } | { ok: false; erro: string };
 
+export function formatarWhatsapp(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 11);
+  if (d.length < 11) return raw;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
+}
+
 export function validarPayloadInscricao(input: unknown): Resultado<InscricaoValidada> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, erro: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
-  const v = parsed.data;
+  const v = { ...parsed.data, whatsapp: formatarWhatsapp(parsed.data.whatsapp) };
   if (v.alojamento && (!v.tipoCama || !v.dataChegada)) {
     return { ok: false, erro: "Alojamento exige tipo de cama e data de chegada." };
   }

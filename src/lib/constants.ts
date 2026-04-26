@@ -13,9 +13,18 @@ export const PREDIOS = {
     quartos: 1,
     camasPorQuarto: 25,
   },
+  extra: {
+    baixo: 2,
+    cima: 0,
+    label: "Prédio extra",
+    quartos: 1,
+    camasPorQuarto: 2,
+  },
 } as const;
 export type Predio = keyof typeof PREDIOS;
+export type PredioPrincipal = "novo" | "antigo";
 export const PREDIO_VALUES = ["novo", "antigo"] as const;
+export const PREDIO_PRINCIPAIS: readonly PredioPrincipal[] = ["novo", "antigo"];
 
 export const MESES_CONFERENCIA = [
   { num: 2, nome: "Fevereiro", abrev: "FEV" },

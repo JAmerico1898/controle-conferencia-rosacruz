@@ -1,4 +1,4 @@
-import { PREDIOS, type Predio } from "./constants";
+import { PREDIOS, type Predio, type PredioPrincipal } from "./constants";
 
 export type InscricaoMin = {
   genero: "Masculino" | "Feminino";
@@ -16,19 +16,44 @@ export type Vagas = {
   totalAlojados: number;
 };
 
+export type ConfPredios = {
+  predioFeminino: PredioPrincipal;
+  predioMasculino: PredioPrincipal;
+  extraFeminino: boolean;
+  extraMasculino: boolean;
+};
+
+function somar(a: Capacidade, b: Capacidade): Capacidade {
+  return { baixo: a.baixo + b.baixo, cima: a.cima + b.cima };
+}
+
+function capacidadeDe(predios: Predio[]): Capacidade {
+  return predios.reduce<Capacidade>(
+    (acc, p) => somar(acc, { baixo: PREDIOS[p].baixo, cima: PREDIOS[p].cima }),
+    { baixo: 0, cima: 0 },
+  );
+}
+
+export function prediosDoGenero(
+  conf: ConfPredios,
+  genero: "Masculino" | "Feminino",
+): Predio[] {
+  if (genero === "Feminino") {
+    return conf.extraFeminino
+      ? [conf.predioFeminino, "extra"]
+      : [conf.predioFeminino];
+  }
+  return conf.extraMasculino
+    ? [conf.predioMasculino, "extra"]
+    : [conf.predioMasculino];
+}
+
 export function calcularVagas(
   inscricoes: InscricaoMin[],
-  predioFeminino: Predio,
-  predioMasculino: Predio,
+  conf: ConfPredios,
 ): Vagas {
-  const capF: Capacidade = {
-    baixo: PREDIOS[predioFeminino].baixo,
-    cima: PREDIOS[predioFeminino].cima,
-  };
-  const capM: Capacidade = {
-    baixo: PREDIOS[predioMasculino].baixo,
-    cima: PREDIOS[predioMasculino].cima,
-  };
+  const capF = capacidadeDe(prediosDoGenero(conf, "Feminino"));
+  const capM = capacidadeDe(prediosDoGenero(conf, "Masculino"));
   const v: Vagas = {
     capacidade: { feminino: capF, masculino: capM },
     feminino: { ...capF },

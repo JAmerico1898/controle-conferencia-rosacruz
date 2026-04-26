@@ -53,7 +53,7 @@ export function FormularioInscricao() {
             required
             full
           />
-          <Campo label="Email" name="email" type="email" required full />
+          <CampoWhatsapp />
         </div>
       </Card>
 
@@ -163,6 +163,35 @@ function Aviso({
         </p>
       )}
     </div>
+  );
+}
+
+function mascararWhatsapp(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 11);
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function CampoWhatsapp() {
+  const [valor, setValor] = useState("");
+  return (
+    <label className="block sm:col-span-2">
+      <span className="text-xs uppercase tracking-[0.12em] text-ink/60">
+        WhatsApp (com DDD) *
+      </span>
+      <input
+        type="tel"
+        name="whatsapp"
+        required
+        inputMode="numeric"
+        placeholder="(xx) xxxxx-xxxx"
+        value={valor}
+        onChange={(e) => setValor(mascararWhatsapp(e.target.value))}
+        className="mt-2 w-full border border-rule bg-white/70 px-3 py-2 outline-none focus:border-ink focus:bg-white transition-colors num"
+      />
+    </label>
   );
 }
 

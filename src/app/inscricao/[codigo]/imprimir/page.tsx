@@ -57,7 +57,7 @@ export default async function Page({
           />
         )}
         <Linha k="Refeições" v={refs} />
-        <Linha k="Email" v={i.email} />
+        <Linha k="WhatsApp" v={i.whatsapp} />
       </dl>
       {i.cafeDomingo && (
         <p className="mt-6 text-sm italic text-ink/60">

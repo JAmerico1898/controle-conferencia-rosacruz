@@ -27,11 +27,7 @@ export async function PainelVagas() {
     })
     .from(inscricoes)
     .where(eq(inscricoes.conferenciaId, conf.id));
-  const v = calcularVagas(
-    lista as InscricaoMin[],
-    conf.predioFeminino,
-    conf.predioMasculino,
-  );
+  const v = calcularVagas(lista as InscricaoMin[], conf);
   const ativos = lista.filter((i) => i.status === "ativo").length;
   const fim = new Date(conf.inscricoesFim).toLocaleDateString("pt-BR");
   return (

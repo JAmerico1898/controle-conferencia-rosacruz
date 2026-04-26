@@ -29,16 +29,25 @@ export async function abrirConferenciaAction(_: unknown, fd: FormData) {
     inscricoesFim: fim,
   });
   if (!v.ok) return { erro: v.erro };
-  const predioFeminino = String(fd.get("predioFeminino") ?? "");
-  const predioMasculino = String(fd.get("predioMasculino") ?? "");
+  const predioFeminino = String(fd.get("predio_feminino") ?? "");
+  const predioMasculino = String(fd.get("predio_masculino") ?? "");
+  const extraFeminino = fd.get("extra_feminino") === "on";
+  const extraMasculino = fd.get("extra_masculino") === "on";
   if (predioFeminino !== "novo" && predioFeminino !== "antigo") {
-    return { erro: "Selecione o prédio do alojamento feminino." };
+    return { erro: "Selecione o prédio principal do alojamento feminino." };
   }
   if (predioMasculino !== "novo" && predioMasculino !== "antigo") {
-    return { erro: "Selecione o prédio do alojamento masculino." };
+    return { erro: "Selecione o prédio principal do alojamento masculino." };
   }
   if (predioFeminino === predioMasculino) {
-    return { erro: "Os prédios feminino e masculino devem ser diferentes." };
+    return {
+      erro: "Os prédios principais feminino e masculino devem ser diferentes.",
+    };
+  }
+  if (extraFeminino && extraMasculino) {
+    return {
+      erro: "O prédio extra pode ser atribuído a apenas um dos gêneros.",
+    };
   }
   const aberta = await db
     .select()
@@ -59,6 +68,8 @@ export async function abrirConferenciaAction(_: unknown, fd: FormData) {
       status: "aberta",
       predioFeminino,
       predioMasculino,
+      extraFeminino,
+      extraMasculino,
       criadoPor: sessao.login,
     });
   } catch (e: any) {
