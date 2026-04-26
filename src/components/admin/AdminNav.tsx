@@ -12,11 +12,11 @@ export function AdminNav({ login }: { login: string }) {
   return (
     <header className="border-b border-rule bg-bone/80 backdrop-blur sticky top-0 z-10">
       <div className="mx-auto max-w-6xl px-6 py-4 flex items-baseline justify-between gap-6">
-        <Link href="/admin/conferencias" className="font-display text-xl">
-          O <span className="display-italic text-saffron">Novo Sol</span>
-          <span className="ml-2 text-xs uppercase tracking-[0.2em] text-clay">
-            coordenação
-          </span>
+        <Link
+          href="/admin/conferencias"
+          className="font-display text-xl text-saffron"
+        >
+          O Novo Sol
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           {itens.map((i) => (
