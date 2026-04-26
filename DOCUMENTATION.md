@@ -1,177 +1,308 @@
-# Gestão de Conferências — Centro "O NOVO SOL"
+# Gestão de Conferências — Centro "O Novo Sol"
 
-Aplicativo Streamlit para gerenciar inscrições de conferências da Escola Espiritual da Rosacruz Áurea — Centro "O Novo Sol". Permite ao público realizar/cancelar inscrições enquanto há uma conferência ativa, e a gestores administrarem conferências, inscritos e relatórios. A persistência é feita inteiramente em uma planilha Google Sheets (uma aba por conferência + uma aba `_controle`).
+Aplicação web para gerenciar inscrições das conferências da Escola Espiritual da
+Rosacruz Áurea — Centro "O Novo Sol". O público se inscreve / cancela enquanto
+houver uma conferência aberta; gestores administram conferências, inscritos,
+relatórios e dashboards.
 
----
-
-## 1. Arquitetura geral
-
-```
-┌────────────────────────────────────────────────────┐
-│                     app.py                         │
-│  (entry point Streamlit · navegação público/admin) │
-└──────────────┬───────────────────────┬─────────────┘
-               │                       │
-               ▼                       ▼
-       area_publica.py         auth.py  →  area_restrita.py
-       (inscrição/cancel.)     (login)     (gestão/dashboards)
-               │                              │
-               └──────────────┬───────────────┘
-                              ▼
-                          sheets.py
-              (gspread + cache + alocação de cama)
-                              │
-                              ▼
-                       Google Sheets
-              ( aba _controle + abas por conferência )
-                              ▲
-                              │
-                          config.py
-                (constantes: prédios, meses, colunas…)
-```
-
-### Fluxo de execução
-1. `app.py` configura a página, a sidebar e decide entre **Área Pública** e **Área Administrativa** com base em `st.session_state["modo"]`.
-2. A **Área Pública** consulta `sheets.obter_conferencia_ativa()`. Se houver conferência ativa dentro do período, exibe os formulários de inscrição/cancelamento; caso contrário, exibe a tela de inscrições fechadas.
-3. A **Área Administrativa** exige autenticação (`auth.autenticar()`) e expõe três abas: gestão da conferência, gestão de inscrições e dashboards.
-4. Toda leitura/escrita de dados passa por `sheets.py`, que aplica caching (`@st.cache_data(ttl=30)`) e invalidação manual após escritas.
-
-### Modelo de dados (Google Sheets)
-- **Aba `_controle`** — uma linha por conferência criada. Colunas (`CONTROLE_COLUNAS`):
-  `nome_aba, mes, ano, data_inicio, data_fim, ocupacao, ativa`. Apenas uma conferência tem `ativa = SIM` por vez.
-- **Aba por conferência** — nome no formato `AAAA-MM-MesPorExtenso` (ex: `2026-04-Abril`). Colunas (`COLUNAS_PLANILHA`): código de inscrição, dados pessoais, alojamento (prédio/quarto/cama/tipo_cama), data de chegada, refeições, email e status (`Ativo` ou `Cancelado`).
+Produção: <https://controle-conferencia.vercel.app>
 
 ---
 
-## 2. Módulos
+## 1. Stack
 
-### `app.py` — Entry point
-- Configura `st.set_page_config` (título, ícone Rosacruz, layout *wide*, sidebar colapsada).
-- Injeta CSS customizado (cor `#e94560` em métricas/tabs; esconde menu e footer do Streamlit).
-- Mantém `st.session_state["modo"]` em `"publico"` ou `"admin"` e renderiza a área correspondente. Importa `area_publica`/`area_restrita` *lazy*, dentro de cada branch.
+- **Next.js 15** (App Router, React 19, Server Components + Server Actions)
+- **TypeScript**
+- **Tailwind CSS** (paleta `bone`/`ink`/`clay`/`saffron`/`rule`)
+- **Postgres** gerenciado (Neon, região `sa-east-1`) — provisionado via Vercel
+- **Drizzle ORM** + `drizzle-kit` (migrations versionadas em `drizzle/`)
+- **Zod** para validação de payload
+- **bcryptjs** + **jose** (JWT em cookie httpOnly) para autenticação admin
+- **exceljs** — export XLSX
+- **docx** — relatórios DOCX por prédio
+- **recharts** — gráficos do dashboard
+- **Vitest** — testes unitários
 
-### `config.py` — Constantes do domínio
-Concentra as regras de negócio estáticas:
-- **`PREDIOS`** — capacidade de cada prédio: `Prédio Antigo` (50 camas, 1 quarto, 25 baixo + 25 cima), `Prédio Novo` (48 camas em 4 quartos, 6+6 por quarto), `Prédio Extra` (2 camas, gerido manualmente).
-- **`COMBINACOES_OCUPACAO`** — mapeamentos gênero→prédio (ex: "Homens → Antigo / Mulheres → Novo"). Escolhido na abertura da conferência.
-- **`MESES_CONFERENCIA`** / **`PREFIXO_MES`** — meses elegíveis (exclui janeiro e julho) e prefixos de código (FEV, MAR, ABR…).
-- **`ESTADOS_BR`**, **`DISCIPULADOS`** — listas para selectboxes.
-- **`DATAS_CHEGADA`** e **`REFEICOES_POR_CHEGADA`** — refeições disponíveis dependem do horário de chegada (sexta tarde/noite x sábado manhã). `REFEICOES_NAO_ALOJADO` para quem não usa alojamento.
-- **`COLUNAS_PLANILHA`** / **`CONTROLE_COLUNAS`** — esquemas das duas abas.
-
-### `auth.py` — Autenticação simples
-- `autenticar()` — formulário de login que compara contra a lista `st.secrets["gestores"]["users"]` (lista de `{login, senha}`). Em sucesso, grava `autenticado=True` e `usuario` em `session_state`. Retorna `True/False` e é usado como gate da área restrita.
-- `logout()` — limpa o estado de autenticação e força `st.rerun()`.
-
-> Segurança: senhas em texto plano nos secrets. Apropriado apenas para um grupo pequeno de gestores confiáveis. Trocar por hash/IdP se a base crescer.
-
-### `sheets.py` — Persistência e regras de alocação
-Camada única que fala com o Google Sheets via `gspread` + `google-oauth2`. Cache TTL de 30s para reduzir chamadas à API; invalidado manualmente por `_invalidar_cache()` após qualquer escrita.
-
-**Conexão**
-- `_get_gspread_client()` — autentica com a service account em `st.secrets["gcp_service_account"]` (JSON serializado).
-- `_get_spreadsheet()` — abre a planilha por `spreadsheet_id`.
-
-**Aba de controle**
-- `_get_or_create_controle()` — garante que `_controle` existe (cria se faltar).
-- `carregar_controle()` / `obter_conferencia_ativa()` — lê tudo / filtra a linha ativa.
-- `abrir_conferencia(mes, ano, data_inicio, data_fim, ocupacao)` — desativa qualquer conferência ativa, anexa nova linha em `_controle` e cria a aba da conferência com cabeçalho.
-- `fechar_conferencia()` — apenas marca a ativa como `NÃO`.
-- `obter_ocupacao_conferencia(nome_aba)` — devolve o dict gênero→prédio.
-
-**Inscrições**
-- `carregar_inscricoes` / `carregar_inscricoes_ativas` — filtra `status != CANCELADO`.
-- `verificar_nome_duplicado` — case-insensitive contra inscrições ativas.
-- `contar_vagas(nome_aba)` — devolve por prédio: ocupação e vagas remanescentes em camas baixo/cima/total. Ignora `Prédio Extra` (manual).
-- `calcular_quarto_cama(nome_aba, predio, tipo_cama)` — alocação automática:
-  - Antigo / Extra: quarto = 1, cama sequencial.
-  - Novo: distribui em 4 quartos, `quarto = ocupados // 6 + 1`, `cama = ocupados % 6 + 1` (separadamente para baixo/cima).
-- `gerar_codigo` — `<PREFIXO_MES><ano>-<seq:03d>` (ex: `ABR2026-001`).
-- `salvar_inscricao` / `cancelar_inscricao` / `buscar_inscricao_por_nome` / `atualizar_inscricao` — CRUD por nome (chave funcional).
-
-### `area_publica.py` — Inscrição e cancelamento
-
-`exibir_area_publica()` é o ponto de entrada. Lógica:
-1. Sem conferência ativa **ou** fora da janela `data_inicio..data_fim`: tela "inscrições fechadas".
-2. Caso contrário: cabeçalho com mês/ano + painel de vagas + duas abas (Inscrição / Cancelamento).
-
-**Painel de vagas (`_exibir_painel_vagas`)** — mostra três métricas: vagas masculinas, vagas femininas e total de inscritos, derivando o prédio de cada gênero a partir da ocupação configurada.
-
-**Formulário de inscrição (`_formulario_inscricao`)**
-- Coleta: nome, gênero, cidade/estado, discipulado, alojamento (Sim/Não), preferência baixo/cima, data de chegada, refeições, email.
-- Lógica de fallback de cama: se a preferência (baixo/cima) está esgotada, oferece o tipo alternativo; se ambos esgotados, oferece inscrição sem alojamento.
-- Refeições mostradas dependem da data de chegada. Café de domingo é incluído automaticamente para alojados.
-- Validações: campos obrigatórios + nome único. Em sucesso: calcula quarto/cama, gera código, persiste e exibe `_exibir_confirmacao`.
-
-**Cancelamento (`_formulario_cancelamento`)** — busca a inscrição por nome, exibe os dados e chama `cancelar_inscricao` (marca status = `Cancelado` e grava timestamp).
-
-### `area_restrita.py` — Gestão administrativa
-Três abas:
-
-**Gestão da Conferência (`_gestao_conferencia`)**
-- Status da conferência ativa, com botão para fechar.
-- Formulário para abrir nova: mês (de `MESES_CONFERENCIA`), datas de início/fim de inscrições, e combinação de ocupação. Ano é derivado da data de início. Bloqueia abertura se já houver uma ativa ou se as datas forem inconsistentes.
-- Histórico — `dataframe` de `_controle` formatado em `DD/MM/YYYY`.
-
-**Gestão de Inscrições (`_gestao_inscricoes`)**
-- Seleciona conferência (qualquer uma do histórico, com a ativa em destaque).
-- Lista inscritos ativos (com colunas de alojamento/quarto/cama/tipo_cama).
-- Exporta CSV e Excel (via `openpyxl`).
-- **Relatórios DOCX por prédio** (`_gerar_relatorios_predios`) — usa `python-docx`:
-  - Antigo: tabela Nome + Tipo de Cama + Nº Cama.
-  - Novo: tabela Nome + Quarto + Tipo de Cama + Nº Cama.
-  - Extra: tabela só com Nome.
-- Cancelar inscrição existente.
-- Editar inscrição: permite mover entre prédios (incluindo `Prédio Extra` para realocação manual), trocar tipo de cama, quarto, cama, e demais dados.
-
-**Dashboards (`_dashboards`)**
-- Cartões: total / alojados / não alojados.
-- Barras de ocupação (baixo + cima) por prédio principal, rotuladas com o gênero alocado.
-- Gráficos de barras por gênero, discipulado, estado (com detalhamento por cidade num expander).
-- Contagem de refeições (tabela + gráfico) usando `jantar_sexta`, `almoco_sabado`, `jantar_sabado`, `cafe_domingo`, `lanche_domingo`.
-
-**Utilidades**
-- `_selecionar_conferencia` — selectbox uniforme (ativa em destaque).
-- `_fmt_data` — `YYYY-MM-DD` → `DD/MM/YYYY`.
+Hospedagem: Vercel (deploy automático em push para `main`).
 
 ---
 
-## 3. Configuração e secrets
+## 2. Arquitetura
 
-Arquivo `.streamlit/secrets.toml` (modelo em `secrets_example.toml`) deve conter:
-
-```toml
-spreadsheet_id = "<id da planilha do Google>"
-
-# JSON da service account, serializado como string
-gcp_service_account = """{ ... }"""
-
-[gestores]
-users = [
-  { login = "admin", senha = "..." },
-]
+```
+src/
+├── app/
+│   ├── page.tsx                    Área pública (PainelVagas + FormulárioInscricao)
+│   ├── cancelamento/page.tsx       Cancelamento por nome
+│   ├── inscricao/[codigo]/imprimir Comprovante para impressão
+│   ├── login/                      Login admin
+│   └── admin/
+│       ├── layout.tsx              AdminNav + guard de sessão
+│       ├── conferencias/           Abrir / fechar / histórico
+│       ├── inscricoes/             Lista + edição + Excel
+│       │   └── exportar/route.ts   GET .xlsx (exceljs)
+│       ├── dashboards/             KPIs + gráficos
+│       └── relatorios/
+│           ├── page.tsx            Botões por prédio
+│           └── [predio]/route.ts   GET .docx (alocação de camas)
+│
+├── components/
+│   ├── admin/                      AdminNav, ConferenciaForm, ListaInscricoes,
+│   │   │                           LinhaInscricao, EditarInscricaoDialog,
+│   │   │                           HistoricoConferencias, dashboards/*
+│   │   └── dashboards/             ResumoGeral, PorGenero, PorDiscipulado,
+│   │                               PorEstado, ContagemRefeicoes
+│   └── public/                     FormularioInscricao, FormularioCancelamento,
+│                                   PainelVagas, BotaoImprimir, Hero
+│
+├── server/actions/                 Server Actions (use server)
+│   ├── auth.ts                     loginAction, logoutAction
+│   ├── conferencia.ts              abrirConferenciaAction, fecharConferenciaAction
+│   ├── inscricao.ts                criarInscricaoAction, buscarInscricaoPorNome,
+│   │                               cancelarInscricaoPublicaAction
+│   └── admin-inscricao.ts          editarInscricaoAction, cancelarInscricaoAdminAction
+│
+├── lib/
+│   ├── db/
+│   │   ├── schema.ts               Tabelas, enums, tipos Drizzle
+│   │   └── client.ts               Singleton lazy do drizzle/postgres-js
+│   ├── auth.ts                     parseAdminUsers, verificarCredenciais,
+│   │                               criarSessao, getSessao (JWT)
+│   ├── constants.ts                PREDIOS, MESES, ESTADOS, DISCIPULADOS, GENEROS…
+│   ├── conferencias.ts             validarAberturaConferencia, formatarNomeConferencia
+│   ├── inscricoes.ts               Schema Zod + formatarWhatsapp + validarPayload
+│   ├── refeicoes.ts                Regras: quais refeições são válidas por chegada
+│   ├── nome.ts                     normalizarNome (chave funcional case-insensitive)
+│   ├── codigo-inscricao.ts         Gerador de códigos PREFIXO-AAAA-NNN
+│   ├── vagas.ts                    calcularVagas (combina principal + extra)
+│   ├── relatorio.ts                alocarCamas, generoDoPredio, nomeArquivoRelatorio
+│   └── rate-limit.ts               Limiter em memória (inscrições por IP)
+│
+├── scripts/                        Scripts one-shot rodados com tsx
+└── drizzle/                        Migrations SQL + meta journal
 ```
 
-A planilha precisa ser compartilhada com o e-mail da service account (papel Editor). O arquivo `controle-conferencia-37831b339410.json` no repositório é a chave da service account — em produção deve ficar **fora** do repositório.
+---
 
-## 4. Como rodar
+## 3. Modelo de dados (Postgres)
+
+### `conferencias`
+| coluna | tipo | descrição |
+|---|---|---|
+| `id` | serial PK | |
+| `mes` / `ano` | int | composite unique `(mes, ano)` |
+| `nome` | text | "Abril 2026" |
+| `inscricoes_abertura` / `inscricoes_fim` | timestamptz | janela pública |
+| `status` | enum `aberta` \| `fechada` | unique parcial garante **só uma `aberta`** por vez |
+| `predio_feminino` | enum `novo` \| `antigo` | prédio principal feminino |
+| `predio_masculino` | enum `novo` \| `antigo` | prédio principal masculino |
+| `extra_feminino` | bool | usa o Prédio Extra (2 camas baixo) para o feminino |
+| `extra_masculino` | bool | idem masculino (apenas um gênero pode usar) |
+| `criado_em` / `criado_por` | | auditoria |
+
+### `inscricoes`
+| coluna | tipo | descrição |
+|---|---|---|
+| `id` | serial PK | |
+| `codigo` | text unique | "ABR2026-001" |
+| `conferencia_id` | FK | `ON DELETE RESTRICT` |
+| `nome` / `nome_normalizado` | text | unique `(conferencia_id, nome_normalizado)` |
+| `genero` | enum `Masculino` \| `Feminino` | |
+| `cidade`, `estado`, `discipulado` | text | |
+| `alojamento` | bool | |
+| `tipo_cama` | enum `baixo` \| `cima` \| null | |
+| `data_chegada` | enum `sabado_manha` \| `sabado_tarde` \| null | |
+| `almoco_sabado`, `jantar_sabado`, `lanche_domingo`, `cafe_domingo` | bool | café é automático para alojados |
+| `whatsapp` | text | formato `(xx) xxxxx-xxxx` |
+| `status` | enum `ativo` \| `cancelado` | hoje cancelar **deleta a linha** (hard-delete) — o enum permanece para evolução |
+| `criado_em`, `cancelado_em`, `cancelado_por`, `alterado_em`, `alterado_por` | | auditoria |
+
+Índice secundário: `(conferencia_id, status)`.
+
+### Migrations aplicadas
+- `0000_*` — schema inicial
+- `0001_*` — assignments por prédio (`predio_feminino`, `predio_masculino`)
+- `0002_*` — `extra_feminino`, `extra_masculino`
+- `0003_rename_email_to_whatsapp` — coluna `email` → `whatsapp`
+
+---
+
+## 4. Domínio
+
+### Prédios (`src/lib/constants.ts`)
+
+| key | label | baixo | cima | quartos | obs |
+|---|---|---|---|---|---|
+| `novo` | Prédio novo | 24 | 24 | 4 (6 camas/quarto) | |
+| `antigo` | Prédio antigo | 25 | 25 | 1 quartão | |
+| `extra` | Prédio extra | 2 | 0 | 1 | overflow para `baixo` |
+
+### Atribuição por conferência
+
+Cada conferência fixa: **um prédio principal por gênero** (novo ou antigo, distintos)
+e opcionalmente atribui o **Prédio Extra** a **um único gênero** (decisão na abertura,
+imutável em seguida).
+
+### Cálculo de vagas (`lib/vagas.ts`)
+
+`calcularVagas(inscricoes, conf)` soma a capacidade do principal + (se aplicável) do
+extra para o gênero atribuído, e desconta cada inscrição ativa que tem `alojamento`
++ `tipoCama` definido. O `PainelVagas` (público) e o Dashboard usam isso.
+
+### Alocação de camas no relatório DOCX (`lib/relatorio.ts`)
+
+Para cada gênero, `alocarCamas` ordena as inscrições elegíveis por `criado_em` e
+preenche **primeiro o prédio principal**:
+
+- `cima` → sempre vai pro principal (extra não tem camas de cima).
+- `baixo` → primeiro lota o principal; o overflow (até 2 pessoas) entra no extra.
+
+A numeração de quarto/cama segue `camasPorQuarto` do prédio.
+
+### Refeições (`lib/refeicoes.ts`)
+
+- Café de domingo é incluído automaticamente para alojados.
+- Chegada `sabado_tarde` desabilita almoço de sábado.
+- Para não alojados, todas as refeições são opcionais (vide regras no módulo).
+
+---
+
+## 5. Server Actions e fluxos críticos
+
+### Inscrição pública (`criarInscricaoAction`)
+
+1. Honeypot anti-bot (`website`).
+2. Rate limit por IP (`limiterInscricao`).
+3. Validação Zod + normalização do WhatsApp para `(xx) xxxxx-xxxx`.
+4. Tudo dentro de `db.transaction`:
+   - `SELECT ... FOR UPDATE` na conferência aberta (lock).
+   - Recalcula vagas; rejeita se o tipo de cama solicitado se esgotou.
+   - Verifica duplicidade de nome (case-insensitive, ativo).
+   - Conta inscrições e gera código sequencial (`PREFIXO-AAAA-NNN`).
+   - Insere a linha.
+5. `redirect` para `/inscricao/[codigo]/imprimir`.
+
+### Cancelamento (público e admin)
+Hoje ambos fazem **hard-delete** da linha (`db.delete(...)`). O enum `status`
+permanece para o caso de querermos reativar soft-delete.
+
+### Edição admin (`editarInscricaoAction`)
+Reaplica `validarPayloadInscricao`, atualiza tudo + `alterado_em`/`alterado_por`,
+revalida `/admin/inscricoes` e `/`.
+
+### Conferências (`abrirConferenciaAction`, `fecharConferenciaAction`)
+- Abertura valida mês válido, datas coerentes, ausência de conferência aberta
+  e prédios principais distintos. Garante que `extra` esteja em no máximo um gênero.
+- Fechamento muda `status` para `fechada` (atomicamente, condicionado a estar `aberta`).
+
+---
+
+## 6. Autenticação admin
+
+- Logins e hashes bcrypt em `process.env.ADMIN_USERS`, formato:
+  `login1:$2a$10$hash1,login2:$2a$10$hash2,...`
+- Sessão JWT (HS256, 12h) em cookie httpOnly `novosol_session`, segredo em
+  `SESSION_SECRET`.
+- O `layout.tsx` de `/admin` chama `getSessao()` e redireciona para `/login`
+  se ausente.
+
+> **Atenção em dev local**: o parser de `.env.local` do Next (`@next/env` +
+> `dotenv-expand`) interpreta `$` como variável mesmo dentro de aspas simples,
+> truncando hashes bcrypt (ex.: `$2a$10$xxx` vira string vazia). Para
+> contornar, escape cada `$` com `\$` na linha do `ADMIN_USERS` no
+> `.env.local`. O script `scripts/escape-env.mjs` faz isso de forma idempotente.
+> Em produção (variáveis vindas do painel da Vercel) o problema não ocorre.
+
+---
+
+## 7. Relatórios e exportações
+
+| Saída | Rota | Lib | Conteúdo |
+|---|---|---|---|
+| Inscrições XLSX | `GET /admin/inscricoes/exportar?conferenciaId=X` | `exceljs` | Todas as colunas relevantes; datas tipadas |
+| Distribuição de camas DOCX | `GET /admin/relatorios/[predio]` | `docx` | Tabela Nome / Quarto / Tipo / Nº cama, ordenada por quarto |
+
+O botão do Prédio Extra só aparece em `/admin/relatorios` quando algum gênero
+o utiliza naquela conferência.
+
+---
+
+## 8. Dashboards
+
+`/admin/dashboards` agrega da conferência selecionada (default = aberta):
+
+- KPIs: total de inscritos, alojados, não alojados.
+- **Ocupação por alojamento** (BarChart) — barras `Feminino · baixo`, `Feminino · cima`,
+  `Masculino · baixo`, `Masculino · cima`, com segmentos *ocupado* (clay) +
+  *livre* (saffron). Os valores combinam principal + extra.
+- Gráficos: por gênero (pizza), por discipulado (barras), por estado (top 12),
+  contagem de refeições.
+
+---
+
+## 9. Configuração e secrets
+
+`.env.local` (não comitado):
+
+```
+DATABASE_URL="postgresql://...neondb..."
+DATABASE_URL_UNPOOLED="postgresql://..."     # opcional
+ADMIN_USERS='login1:\$2a\$10\$hash1,login2:\$2a\$10\$hash2,...'
+SESSION_SECRET="random-256-bits"
+```
+
+Em produção, todas as envs ficam no painel da Vercel (sem necessidade de
+escapar `$`).
+
+---
+
+## 10. Como rodar localmente
 
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+npm install
+npm run db:push        # sincroniza schema com o DATABASE_URL
+npm run dev            # http://localhost:3000
 ```
 
-## 5. Ciclo de vida de uma conferência
+Outros scripts:
 
-1. Admin abre conferência → `_controle` ganha linha `ativa=SIM` e a aba `AAAA-MM-Mes` é criada.
-2. Público se inscreve → linhas anexadas; alocação automática de prédio/quarto/cama/tipo_cama.
-3. Admin acompanha vagas, cancela, edita, exporta e baixa relatórios DOCX.
-4. Admin fecha → `ativa=NÃO`. Os dados continuam acessíveis pela aba histórica.
+```bash
+npm run build          # build de produção
+npm run lint
+npm test               # vitest
+npm run db:generate    # cria nova migration a partir de schema.ts
+npm run db:studio      # Drizzle Studio (UI)
+npm run db:seed        # seed de exemplo (scripts/seed.ts)
+```
 
-## 6. Pontos de extensão / observações
+### Scripts auxiliares (`scripts/*.ts`, executados com `tsx`)
 
-- **Cache TTL de 30s** (`sheets.CACHE_TTL`): pode atrasar alterações concorrentes; ajustar conforme volume.
-- **Concorrência** — duas inscrições simultâneas podem receber o mesmo quarto/cama (não há lock no Sheets). Para volumes maiores, considerar uma transação/lock externo.
-- **Senhas em texto plano** — substituir por hash + IdP em uma evolução.
-- **Prédio Extra** é gerido manualmente (não entra em `contar_vagas`); a movimentação ocorre via edição administrativa.
-- **Coluna de status** usa string (`Ativo` / `Cancelado`); comparações são case-insensitive em `sheets.py`.
+- `apply-migration-0002.ts` — adiciona `extra_feminino`/`extra_masculino` (idempotente).
+- `apply-migration-0003.ts` — renomeia `email` → `whatsapp` (idempotente).
+- `wipe-db.ts` — `TRUNCATE` com `CASCADE` + `RESTART IDENTITY` (uso administrativo).
+- `escape-env.mjs` — escapa `$` no `ADMIN_USERS` do `.env.local`.
+
+---
+
+## 11. Deploy
+
+- **Push em `main` → deploy automático em produção** pela integração GitHub × Vercel.
+- Manual: `vercel --prod` (CLI).
+- Migrations não rodam automaticamente no deploy. Para schema novo: aplicar
+  via `npm run db:push` (responder *rename* quando for o caso) **ou** rodar o
+  script `apply-migration-NNNN.ts` correspondente apontando o `.env.local` para o
+  `DATABASE_URL` de produção.
+
+---
+
+## 12. Limitações conhecidas / próximos passos
+
+- **Hard-delete em cancelamentos**: perde-se rastro histórico. O enum `status`
+  permanece para reativar soft-delete se necessário.
+- **Rate limit em memória**: não compartilhado entre instâncias. Em volume,
+  mover para Upstash/Redis.
+- **Sem testes E2E**: cobertura é unitária (lib/). Considerar Playwright
+  para os fluxos públicos.
+- **Login**: senhas bcrypt em env var. Apropriado para o número atual de
+  gestores; trocar por IdP se a base crescer.
+- **Sem job de migration no CI**: aplicar migrations é manual.
