@@ -28,14 +28,23 @@ export default async function Home() {
         <PainelVagas />
         {conf && (
           <section>
-            <header className="flex items-baseline justify-between gap-4 flex-wrap mb-6">
-              <h2 className="font-display text-3xl">Formulário de inscrição</h2>
-              <Link
-                href="/cancelamento"
-                className="text-sm text-ink/60 hover:text-ink"
-              >
-                Cancelar inscrição
-              </Link>
+            <header className="mb-8">
+              <div className="flex items-baseline justify-between gap-4 flex-wrap">
+                <h2 className="font-display text-3xl">
+                  Formulário de inscrição
+                </h2>
+                <Link
+                  href="/cancelamento"
+                  className="text-sm text-ink/60 hover:text-ink"
+                >
+                  Cancelar inscrição
+                </Link>
+              </div>
+              <p className="text-sm text-ink/60 mt-3 leading-relaxed">
+                Leia com atenção: o nome informado é a chave da inscrição —
+                uma vez registrado, alterações exigem cancelamento e nova
+                inscrição.
+              </p>
             </header>
             <FormularioInscricao />
           </section>

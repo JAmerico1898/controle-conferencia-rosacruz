@@ -34,8 +34,6 @@ export function FormularioInscricao() {
         aria-hidden
       />
 
-      <Aviso />
-
       <Card title="Identificação">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
           <Campo label="Nome completo" name="nome" required full />
