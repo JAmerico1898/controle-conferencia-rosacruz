@@ -60,16 +60,9 @@ export async function editarInscricaoAction(_: unknown, fd: FormData) {
 }
 
 export async function cancelarInscricaoAdminAction(fd: FormData) {
-  const s = await gestor();
+  await gestor();
   const id = Number(fd.get("id"));
-  await db
-    .update(inscricoes)
-    .set({
-      status: "cancelado",
-      canceladoEm: new Date(),
-      canceladoPor: s.login,
-    })
-    .where(eq(inscricoes.id, id));
+  await db.delete(inscricoes).where(eq(inscricoes.id, id));
   revalidatePath("/admin/inscricoes");
   revalidatePath("/");
 }

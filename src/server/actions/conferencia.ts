@@ -29,6 +29,17 @@ export async function abrirConferenciaAction(_: unknown, fd: FormData) {
     inscricoesFim: fim,
   });
   if (!v.ok) return { erro: v.erro };
+  const predioFeminino = String(fd.get("predioFeminino") ?? "");
+  const predioMasculino = String(fd.get("predioMasculino") ?? "");
+  if (predioFeminino !== "novo" && predioFeminino !== "antigo") {
+    return { erro: "Selecione o prédio do alojamento feminino." };
+  }
+  if (predioMasculino !== "novo" && predioMasculino !== "antigo") {
+    return { erro: "Selecione o prédio do alojamento masculino." };
+  }
+  if (predioFeminino === predioMasculino) {
+    return { erro: "Os prédios feminino e masculino devem ser diferentes." };
+  }
   const aberta = await db
     .select()
     .from(conferencias)
@@ -46,6 +57,8 @@ export async function abrirConferenciaAction(_: unknown, fd: FormData) {
       inscricoesAbertura: inicio,
       inscricoesFim: fim,
       status: "aberta",
+      predioFeminino,
+      predioMasculino,
       criadoPor: sessao.login,
     });
   } catch (e: any) {

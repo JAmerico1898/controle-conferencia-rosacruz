@@ -1,7 +1,9 @@
-export const CAPACIDADE = {
-  feminino: { baixo: 26, cima: 24 },
-  masculino: { baixo: 25, cima: 25 },
+export const PREDIOS = {
+  novo: { baixo: 25, cima: 25, label: "Prédio novo" },
+  antigo: { baixo: 26, cima: 24, label: "Prédio antigo" },
 } as const;
+export type Predio = keyof typeof PREDIOS;
+export const PREDIO_VALUES = ["novo", "antigo"] as const;
 
 export const MESES_CONFERENCIA = [
   { num: 2, nome: "Fevereiro", abrev: "FEV" },

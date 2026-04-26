@@ -9,6 +9,7 @@ export const tipoCamaEnum = pgEnum("tipo_cama", ["baixo", "cima"]);
 export const dataChegadaEnum = pgEnum("data_chegada", ["sabado_manha", "sabado_tarde"]);
 export const statusConfEnum = pgEnum("status_conferencia", ["aberta", "fechada"]);
 export const statusInscEnum = pgEnum("status_inscricao", ["ativo", "cancelado"]);
+export const predioEnum = pgEnum("predio", ["novo", "antigo"]);
 
 export const conferencias = pgTable(
   "conferencias",
@@ -20,6 +21,8 @@ export const conferencias = pgTable(
     inscricoesAbertura: timestamp("inscricoes_abertura", { withTimezone: true }).notNull(),
     inscricoesFim: timestamp("inscricoes_fim", { withTimezone: true }).notNull(),
     status: statusConfEnum("status").notNull().default("aberta"),
+    predioFeminino: predioEnum("predio_feminino").notNull().default("antigo"),
+    predioMasculino: predioEnum("predio_masculino").notNull().default("novo"),
     criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
     criadoPor: text("criado_por").notNull(),
   },

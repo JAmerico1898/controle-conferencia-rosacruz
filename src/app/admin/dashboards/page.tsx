@@ -31,7 +31,11 @@ export default async function Page({
     .where(eq(inscricoes.conferenciaId, sel.id));
   const ativos = rowsAll.filter((r) => r.status === "ativo");
 
-  const vagas = calcularVagas(rowsAll as InscricaoMin[]);
+  const vagas = calcularVagas(
+    rowsAll as InscricaoMin[],
+    sel.predioFeminino,
+    sel.predioMasculino,
+  );
   const porGenero = ["Masculino", "Feminino"].map((g) => ({
     genero: g,
     n: ativos.filter((a) => a.genero === g).length,

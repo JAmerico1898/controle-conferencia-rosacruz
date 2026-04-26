@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { abrirConferenciaAction } from "@/server/actions/conferencia";
-import { MESES_CONFERENCIA } from "@/lib/constants";
+import { MESES_CONFERENCIA, PREDIOS } from "@/lib/constants";
 
 function Btn() {
   const { pending } = useFormStatus();
@@ -66,7 +66,41 @@ export function ConferenciaForm({ ano }: { ano: number }) {
             className="mt-1 w-full border border-rule px-3 py-2 bg-transparent"
           />
         </label>
+        <label className="block">
+          <span className="text-sm text-ink/70">Alojamento feminino — prédio</span>
+          <select
+            name="predioFeminino"
+            required
+            defaultValue="antigo"
+            className="mt-1 w-full border border-rule px-3 py-2 bg-transparent"
+          >
+            {Object.entries(PREDIOS).map(([k, p]) => (
+              <option key={k} value={k}>
+                {p.label} ({p.baixo} baixo / {p.cima} cima)
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-sm text-ink/70">Alojamento masculino — prédio</span>
+          <select
+            name="predioMasculino"
+            required
+            defaultValue="novo"
+            className="mt-1 w-full border border-rule px-3 py-2 bg-transparent"
+          >
+            {Object.entries(PREDIOS).map(([k, p]) => (
+              <option key={k} value={k}>
+                {p.label} ({p.baixo} baixo / {p.cima} cima)
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
+      <p className="text-xs text-ink/50">
+        Os prédios feminino e masculino devem ser diferentes. A escolha é fixa
+        após a abertura.
+      </p>
       {state?.erro && <p className="text-red-700 text-sm">{state.erro}</p>}
       {state?.ok && <p className="text-clay text-sm">Conferência aberta com sucesso.</p>}
       <Btn />

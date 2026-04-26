@@ -1,4 +1,4 @@
-import { CAPACIDADE } from "./constants";
+import { PREDIOS, type Predio } from "./constants";
 
 export type InscricaoMin = {
   genero: "Masculino" | "Feminino";
@@ -7,16 +7,32 @@ export type InscricaoMin = {
   status: "ativo" | "cancelado";
 };
 
+export type Capacidade = { baixo: number; cima: number };
+
 export type Vagas = {
-  feminino: { baixo: number; cima: number };
-  masculino: { baixo: number; cima: number };
+  capacidade: { feminino: Capacidade; masculino: Capacidade };
+  feminino: Capacidade;
+  masculino: Capacidade;
   totalAlojados: number;
 };
 
-export function calcularVagas(inscricoes: InscricaoMin[]): Vagas {
+export function calcularVagas(
+  inscricoes: InscricaoMin[],
+  predioFeminino: Predio,
+  predioMasculino: Predio,
+): Vagas {
+  const capF: Capacidade = {
+    baixo: PREDIOS[predioFeminino].baixo,
+    cima: PREDIOS[predioFeminino].cima,
+  };
+  const capM: Capacidade = {
+    baixo: PREDIOS[predioMasculino].baixo,
+    cima: PREDIOS[predioMasculino].cima,
+  };
   const v: Vagas = {
-    feminino: { ...CAPACIDADE.feminino },
-    masculino: { ...CAPACIDADE.masculino },
+    capacidade: { feminino: capF, masculino: capM },
+    feminino: { ...capF },
+    masculino: { ...capM },
     totalAlojados: 0,
   };
   for (const i of inscricoes) {

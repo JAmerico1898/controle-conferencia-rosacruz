@@ -10,28 +10,27 @@ import {
   Legend,
 } from "recharts";
 import type { Vagas } from "@/lib/vagas";
-import { CAPACIDADE } from "@/lib/constants";
 
 export function ResumoGeral({ vagas }: { vagas: Vagas }) {
   const data = [
     {
       nome: "Fem · baixo",
-      ocupado: CAPACIDADE.feminino.baixo - vagas.feminino.baixo,
+      ocupado: vagas.capacidade.feminino.baixo - vagas.feminino.baixo,
       livre: vagas.feminino.baixo,
     },
     {
       nome: "Fem · cima",
-      ocupado: CAPACIDADE.feminino.cima - vagas.feminino.cima,
+      ocupado: vagas.capacidade.feminino.cima - vagas.feminino.cima,
       livre: vagas.feminino.cima,
     },
     {
       nome: "Mas · baixo",
-      ocupado: CAPACIDADE.masculino.baixo - vagas.masculino.baixo,
+      ocupado: vagas.capacidade.masculino.baixo - vagas.masculino.baixo,
       livre: vagas.masculino.baixo,
     },
     {
       nome: "Mas · cima",
-      ocupado: CAPACIDADE.masculino.cima - vagas.masculino.cima,
+      ocupado: vagas.capacidade.masculino.cima - vagas.masculino.cima,
       livre: vagas.masculino.cima,
     },
   ];

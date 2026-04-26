@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { loginAction } from "@/server/actions/auth";
@@ -49,6 +50,14 @@ export default function LoginPage() {
           {state?.erro && <p className="text-sm text-red-700">{state.erro}</p>}
           <Botao />
         </form>
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            className="text-xs uppercase tracking-[0.2em] text-clay hover:text-ink"
+          >
+            ← voltar à página pública
+          </Link>
+        </div>
       </div>
     </main>
   );

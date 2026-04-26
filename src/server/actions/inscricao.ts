@@ -60,7 +60,11 @@ export async function criarInscricaoAction(_: unknown, formData: FormData) {
         .where(eq(inscricoes.conferenciaId, conf.id));
 
       if (v.value.alojamento && v.value.tipoCama) {
-        const vagas = calcularVagas(ativos as any);
+        const vagas = calcularVagas(
+          ativos as any,
+          conf.predioFeminino,
+          conf.predioMasculino,
+        );
         if (vagasEsgotadas(vagas, v.value.genero, v.value.tipoCama)) {
           throw new Error("As vagas para o tipo de cama solicitado se esgotaram.");
         }
@@ -151,17 +155,10 @@ export async function cancelarInscricaoPublicaAction(_: unknown, formData: FormD
     .select()
     .from(inscricoes)
     .where(eq(inscricoes.codigo, codigo));
-  if (!reg || reg.status !== "ativo") {
-    return { erro: "Inscrição não encontrada ou já cancelada." };
+  if (!reg) {
+    return { erro: "Inscrição não encontrada." };
   }
-  await db
-    .update(inscricoes)
-    .set({
-      status: "cancelado",
-      canceladoEm: new Date(),
-      canceladoPor: "auto-cancelamento",
-    })
-    .where(eq(inscricoes.id, reg.id));
+  await db.delete(inscricoes).where(eq(inscricoes.id, reg.id));
   revalidatePath("/");
   return { ok: true as const };
 }
