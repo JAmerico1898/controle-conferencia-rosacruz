@@ -30,12 +30,12 @@ export default async function Home() {
           <section>
             <header className="mb-8">
               <div className="flex items-baseline justify-between gap-4 flex-wrap">
-                <h2 className="font-display text-xl">
+                <h2 className="font-display text-2xl">
                   Formulário de inscrição
                 </h2>
                 <Link
                   href="/cancelamento"
-                  className="text-sm text-ink/60 hover:text-ink"
+                  className="text-sm text-red-700 hover:text-red-900"
                 >
                   Cancelar inscrição
                 </Link>
