@@ -1,6 +1,18 @@
 export const PREDIOS = {
-  novo: { baixo: 25, cima: 25, label: "Prédio novo" },
-  antigo: { baixo: 26, cima: 24, label: "Prédio antigo" },
+  novo: {
+    baixo: 24,
+    cima: 24,
+    label: "Prédio novo",
+    quartos: 4,
+    camasPorQuarto: 6,
+  },
+  antigo: {
+    baixo: 25,
+    cima: 25,
+    label: "Prédio antigo",
+    quartos: 1,
+    camasPorQuarto: 25,
+  },
 } as const;
 export type Predio = keyof typeof PREDIOS;
 export const PREDIO_VALUES = ["novo", "antigo"] as const;

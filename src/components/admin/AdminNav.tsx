@@ -5,6 +5,7 @@ const itens = [
   { href: "/admin/conferencias", label: "Conferência" },
   { href: "/admin/inscricoes", label: "Inscrições" },
   { href: "/admin/dashboards", label: "Dashboards" },
+  { href: "/admin/relatorios", label: "Relatórios" },
 ];
 
 export function AdminNav({ login }: { login: string }) {
