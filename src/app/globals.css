@@ -15,6 +15,18 @@
   hr { border: none; border-top: 1px solid theme(colors.rule); }
 }
 
+:root {
+  --hero-bg: #FAF7F0;
+  --gold-primary: #C9A227;
+  --gold-deep: #8C6A1A;
+  --gold-light: #E8D27A;
+  --gold-watermark: rgba(201, 162, 39, 0.18);
+  --rose-red: #B0202E;
+  --rose-deep: #6E0F18;
+  --rose-stem: #3F5A2A;
+  --rose-leaf: #547237;
+}
+
 @layer utilities {
   .display-italic { font-family: var(--font-display); font-style: italic; }
   .num { font-variant-numeric: tabular-nums; }

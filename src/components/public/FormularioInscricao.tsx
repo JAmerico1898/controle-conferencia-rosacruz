@@ -11,7 +11,7 @@ function Submit() {
     <button
       type="submit"
       disabled={pending}
-      className="bg-ink text-bone px-8 py-3 font-display tracking-wide hover:bg-clay transition-colors disabled:opacity-50"
+      className="bg-ink text-bone px-10 py-3 font-display tracking-wide hover:bg-clay transition-colors disabled:opacity-50"
     >
       {pending ? "Enviando…" : "Confirmar inscrição"}
     </button>
@@ -24,7 +24,7 @@ export function FormularioInscricao() {
   const [chegada, setChegada] = useState<"sabado_manha" | "sabado_tarde" | "">("");
 
   return (
-    <form action={action} className="space-y-8">
+    <form action={action} className="space-y-6">
       <input
         type="text"
         name="website"
@@ -36,60 +36,109 @@ export function FormularioInscricao() {
 
       <Aviso />
 
-      <Campo label="Nome completo" name="nome" required />
-      <Radios label="Gênero" name="genero" opcoes={[...GENEROS]} required />
-      <Campo label="Cidade" name="cidade" required />
-      <Select label="Estado" name="estado" opcoes={[...ESTADOS_BR]} required />
-      <Select label="Discipulado" name="discipulado" opcoes={[...DISCIPULADOS]} required />
-
-      <Radios
-        label="Precisa de alojamento?"
-        name="alojamento"
-        opcoes={["sim", "nao"]}
-        rotulos={["Sim", "Não"]}
-        required
-        onChange={(v) => setAlojamento(v as "sim" | "nao")}
-      />
-
-      {alojamento === "sim" && (
-        <>
-          <Aviso variant="info">
-            Camas de baixo são prioridade para pessoas com mais idade. A
-            Secretaria pode alterar quarto e cama conforme necessidade do
-            Centro de Conferências.
-          </Aviso>
+      <Card title="Identificação">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+          <Campo label="Nome completo" name="nome" required full />
           <Radios
-            label="Tipo de cama"
-            name="tipoCama"
-            opcoes={["baixo", "cima"]}
-            rotulos={["Baixo", "Cima"]}
+            label="Gênero"
+            name="genero"
+            opcoes={[...GENEROS]}
             required
+            full
           />
+          <Campo label="Cidade" name="cidade" required />
+          <Select label="Estado" name="estado" opcoes={[...ESTADOS_BR]} required />
+          <Select
+            label="Discipulado"
+            name="discipulado"
+            opcoes={[...DISCIPULADOS]}
+            required
+            full
+          />
+          <Campo label="Email" name="email" type="email" required full />
+        </div>
+      </Card>
+
+      <Card title="Estadia & Refeições">
+        <div className="space-y-6">
           <Radios
-            label="Data de chegada"
-            name="dataChegada"
-            opcoes={["sabado_manha", "sabado_tarde"]}
-            rotulos={["Sábado de manhã", "Sábado à tarde"]}
+            label="Precisa de alojamento?"
+            name="alojamento"
+            opcoes={["sim", "nao"]}
+            rotulos={["Sim", "Não"]}
             required
-            onChange={(v) => setChegada(v as "sabado_manha" | "sabado_tarde")}
+            onChange={(v) => setAlojamento(v as "sim" | "nao")}
           />
-          <Refeicoes alojado chegada={chegada} />
-          <p className="text-sm text-ink/60 italic">
-            O café da manhã de domingo está incluído para todos os alunos alojados.
-          </p>
-        </>
-      )}
 
-      {alojamento === "nao" && <Refeicoes />}
+          {alojamento === "sim" && (
+            <div className="space-y-6 border-t border-rule pt-6">
+              <Aviso variant="info">
+                Camas de baixo são prioridade para pessoas com mais idade. A
+                Secretaria pode alterar quarto e cama conforme necessidade do
+                Centro de Conferências.
+              </Aviso>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                <Radios
+                  label="Tipo de cama"
+                  name="tipoCama"
+                  opcoes={["baixo", "cima"]}
+                  rotulos={["Baixo", "Cima"]}
+                  required
+                />
+                <Radios
+                  label="Data de chegada"
+                  name="dataChegada"
+                  opcoes={["sabado_manha", "sabado_tarde"]}
+                  rotulos={["Sáb. manhã", "Sáb. tarde"]}
+                  required
+                  onChange={(v) =>
+                    setChegada(v as "sabado_manha" | "sabado_tarde")
+                  }
+                />
+              </div>
+              <Refeicoes alojado chegada={chegada} />
+              <p className="text-sm text-ink/60 italic">
+                O café da manhã de domingo está incluído para todos os alunos
+                alojados.
+              </p>
+            </div>
+          )}
 
-      <Campo label="Email" name="email" type="email" required />
+          {alojamento === "nao" && (
+            <div className="border-t border-rule pt-6">
+              <Refeicoes />
+            </div>
+          )}
+        </div>
+      </Card>
 
       {state?.erro && (
-        <p className="border border-red-700 text-red-700 p-3 text-sm">{state.erro}</p>
+        <p className="border border-red-700 bg-red-50 text-red-700 p-3 text-sm">
+          {state.erro}
+        </p>
       )}
 
-      <Submit />
+      <div className="flex justify-end pt-2">
+        <Submit />
+      </div>
     </form>
+  );
+}
+
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border border-rule bg-white/55 shadow-[0_1px_2px_rgba(26,22,17,0.04)] p-6 sm:p-8">
+      <h3 className="font-display uppercase tracking-[0.18em] text-xs text-ink/70 border-b border-rule pb-3 mb-6">
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
 
@@ -102,14 +151,17 @@ function Aviso({
 }) {
   return (
     <div
-      className={`border-l-4 px-4 py-3 ${
-        variant === "warn" ? "border-saffron bg-saffron/10" : "border-clay/50 bg-clay/5"
+      className={`border-l-4 px-5 py-4 ${
+        variant === "warn"
+          ? "border-saffron bg-saffron/10"
+          : "border-clay/50 bg-clay/5"
       }`}
     >
       {children ?? (
-        <p className="font-display text-lg">
-          <strong>Leia com atenção.</strong> O nome informado é a chave da inscrição —
-          uma vez registrado, alterações exigem cancelamento e nova inscrição.
+        <p className="font-display text-lg leading-snug">
+          <strong>Leia com atenção.</strong> O nome informado é a chave da
+          inscrição — uma vez registrado, alterações exigem cancelamento e nova
+          inscrição.
         </p>
       )}
     </div>
@@ -121,15 +173,17 @@ function Campo({
   name,
   type = "text",
   required = false,
+  full = false,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
+  full?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm text-ink/70">
+    <label className={`block ${full ? "sm:col-span-2" : ""}`}>
+      <span className="text-xs uppercase tracking-[0.12em] text-ink/60">
         {label}
         {required && " *"}
       </span>
@@ -137,7 +191,7 @@ function Campo({
         type={type}
         name={name}
         required={required}
-        className="mt-1 w-full border border-rule bg-transparent px-3 py-2 outline-none focus:border-ink"
+        className="mt-2 w-full border border-rule bg-white/70 px-3 py-2 outline-none focus:border-ink focus:bg-white transition-colors"
       />
     </label>
   );
@@ -150,6 +204,7 @@ function Radios({
   rotulos,
   required,
   onChange,
+  full = false,
 }: {
   label: string;
   name: string;
@@ -157,10 +212,11 @@ function Radios({
   rotulos?: string[];
   required?: boolean;
   onChange?: (v: string) => void;
+  full?: boolean;
 }) {
   return (
-    <fieldset>
-      <legend className="text-sm text-ink/70">
+    <fieldset className={full ? "sm:col-span-2" : ""}>
+      <legend className="text-xs uppercase tracking-[0.12em] text-ink/60">
         {label}
         {required && " *"}
       </legend>
@@ -168,7 +224,7 @@ function Radios({
         {opcoes.map((o, i) => (
           <label
             key={o}
-            className="border border-rule px-4 py-2 cursor-pointer has-[:checked]:bg-ink has-[:checked]:text-bone transition-colors"
+            className="border border-rule bg-white/60 px-4 py-2 cursor-pointer has-[:checked]:bg-ink has-[:checked]:text-bone has-[:checked]:border-ink transition-colors"
           >
             <input
               type="radio"
@@ -191,15 +247,17 @@ function Select({
   name,
   opcoes,
   required,
+  full = false,
 }: {
   label: string;
   name: string;
   opcoes: string[];
   required?: boolean;
+  full?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm text-ink/70">
+    <label className={`block ${full ? "sm:col-span-2" : ""}`}>
+      <span className="text-xs uppercase tracking-[0.12em] text-ink/60">
         {label}
         {required && " *"}
       </span>
@@ -207,7 +265,7 @@ function Select({
         name={name}
         required={required}
         defaultValue=""
-        className="mt-1 w-full border border-rule bg-transparent px-3 py-2 outline-none focus:border-ink"
+        className="mt-2 w-full border border-rule bg-white/70 px-3 py-2 outline-none focus:border-ink focus:bg-white transition-colors"
       >
         <option value="">—</option>
         {opcoes.map((o) => (
@@ -230,9 +288,15 @@ function Refeicoes({
   const podeAlmoco = !alojado || chegada === "sabado_manha";
   return (
     <fieldset>
-      <legend className="text-sm text-ink/70">Refeições</legend>
-      <div className="mt-2 space-y-2">
-        <Check name="almocoSabado" rotulo="Almoço de sábado" disabled={!podeAlmoco} />
+      <legend className="text-xs uppercase tracking-[0.12em] text-ink/60">
+        Refeições
+      </legend>
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Check
+          name="almocoSabado"
+          rotulo="Almoço de sábado"
+          disabled={!podeAlmoco}
+        />
         <Check name="jantarSabado" rotulo="Jantar de sábado" />
         <Check name="lancheDomingo" rotulo="Lanche de domingo" />
       </div>
@@ -250,14 +314,18 @@ function Check({
   disabled?: boolean;
 }) {
   return (
-    <label className={`flex items-center gap-3 ${disabled ? "opacity-40" : ""}`}>
+    <label
+      className={`flex items-center gap-3 border border-rule bg-white/60 px-3 py-2 cursor-pointer ${
+        disabled ? "opacity-40 cursor-not-allowed" : "hover:border-ink/40"
+      }`}
+    >
       <input
         type="checkbox"
         name={name}
         disabled={disabled}
         className="accent-saffron"
       />
-      <span>{rotulo}</span>
+      <span className="text-sm">{rotulo}</span>
     </label>
   );
 }
