@@ -30,7 +30,7 @@ export default async function Home() {
           <section>
             <header className="mb-8">
               <div className="flex items-baseline justify-between gap-4 flex-wrap">
-                <h2 className="font-display text-3xl">
+                <h2 className="font-display text-xl">
                   Formulário de inscrição
                 </h2>
                 <Link
@@ -40,7 +40,7 @@ export default async function Home() {
                   Cancelar inscrição
                 </Link>
               </div>
-              <p className="text-sm text-ink/60 mt-3 leading-relaxed">
+              <p className="text-sm text-ink mt-3 leading-relaxed">
                 Leia com atenção: o nome informado é a chave da inscrição —
                 uma vez registrado, alterações exigem cancelamento e nova
                 inscrição.
