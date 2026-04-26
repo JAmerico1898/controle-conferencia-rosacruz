@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 
 export const dynamic = "force-dynamic";
 import { conferencias } from "@/lib/db/schema";
-import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Hero } from "@/components/public/Hero/Hero";
 import { PainelVagas } from "@/components/public/PainelVagas";
@@ -16,10 +16,7 @@ export default async function Home() {
     .where(eq(conferencias.status, "aberta"));
   return (
     <>
-      <div className="relative">
-        <SiteHeader variant="overlay" />
-        <Hero />
-      </div>
+      <Hero />
       <main className="mx-auto max-w-3xl px-6 py-12 space-y-12 relative">
         <div className="grain absolute inset-0 -z-10" />
         <p className="text-xs uppercase tracking-[0.2em] text-clay">
@@ -31,7 +28,15 @@ export default async function Home() {
         <PainelVagas />
         {conf && (
           <section>
-            <h2 className="font-display text-3xl mb-6">Formulário de inscrição</h2>
+            <header className="flex items-baseline justify-between gap-4 flex-wrap mb-6">
+              <h2 className="font-display text-3xl">Formulário de inscrição</h2>
+              <Link
+                href="/cancelamento"
+                className="text-sm text-ink/60 hover:text-ink"
+              >
+                Cancelar inscrição
+              </Link>
+            </header>
             <FormularioInscricao />
           </section>
         )}
